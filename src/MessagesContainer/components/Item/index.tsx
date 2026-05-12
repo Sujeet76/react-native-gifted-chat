@@ -9,9 +9,9 @@ export const Item = <TMessage extends IMessage>(props: ItemProps<TMessage>) => {
   const {
     renderMessage: renderMessageProp,
     reply,
-    /* eslint-disable @typescript-eslint/no-unused-vars */
+     
     isDayAnimationEnabled: _isDayAnimationEnabled,
-    /* eslint-enable @typescript-eslint/no-unused-vars */
+     
     ...rest
   } = props
 

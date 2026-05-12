@@ -15,7 +15,7 @@ import { TypingIndicatorProps } from '../TypingIndicator/types'
 export type { LegendListRef }
 
 /** The ref type for the messages list */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 export type AnimatedList<_TMessage> = LegendListRef
 
 /** Additional props for LegendList */
