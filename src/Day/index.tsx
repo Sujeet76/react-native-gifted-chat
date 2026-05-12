@@ -1,14 +1,6 @@
-import React, { useMemo } from 'react'
-import {
-  View,
-} from 'react-native'
-import dayjs from 'dayjs'
-import calendar from 'dayjs/plugin/calendar'
-import relativeTime from 'dayjs/plugin/relativeTime'
-
+import React, { memo, useMemo } from 'react'
+import { View } from 'react-native'
 import { Text } from 'react-native-gesture-handler'
-import { DATE_FORMAT } from '../Constant'
-
 import { useChatContext } from '../GiftedChatContext'
 import stylesCommon from '../styles'
 import styles from './styles'
@@ -16,12 +8,8 @@ import { DayProps } from './types'
 
 export * from './types'
 
-dayjs.extend(relativeTime)
-dayjs.extend(calendar)
-
-export function Day ({
-  dateFormat = DATE_FORMAT,
-  dateFormatCalendar,
+export const Day = memo(function Day ({
+  dateFormatOptions,
   createdAt,
   containerStyle,
   wrapperStyle,
@@ -33,20 +21,23 @@ export function Day ({
     if (createdAt == null)
       return null
 
-    const now = dayjs().startOf('day')
-    const date = dayjs(createdAt).locale(getLocale()).startOf('day')
+    const date = new Date(createdAt)
+    const now = new Date()
+    const isToday = date.toDateString() === now.toDateString()
 
-    if (!now.isSame(date, 'year'))
-      return date.format('D MMMM YYYY')
+    if (isToday)
+      return 'Today'
 
-    if (now.diff(date, 'days') < 1)
-      return date.calendar(now, {
-        sameDay: '[Today]',
-        ...dateFormatCalendar,
-      })
+    const isThisYear = date.getFullYear() === now.getFullYear()
+    const locale = getLocale() || undefined
 
-    return date.format(dateFormat)
-  }, [createdAt, dateFormat, getLocale, dateFormatCalendar])
+    return new Intl.DateTimeFormat(locale, {
+      day: 'numeric',
+      month: 'long',
+      year: isThisYear ? undefined : 'numeric',
+      ...dateFormatOptions,
+    }).format(date)
+  }, [createdAt, dateFormatOptions, getLocale])
 
   if (!dateStr)
     return null
@@ -60,4 +51,4 @@ export function Day ({
       </View>
     </View>
   )
-}
+})

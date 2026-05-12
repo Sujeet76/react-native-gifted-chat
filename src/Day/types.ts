@@ -6,8 +6,8 @@ import {
 
 export interface DayProps {
   createdAt: Date | number
-  dateFormat?: string
-  dateFormatCalendar?: object
+  /** Intl.DateTimeFormatOptions to customize date display (replaces dayjs format strings) */
+  dateFormatOptions?: Intl.DateTimeFormatOptions
   containerStyle?: StyleProp<ViewStyle>
   wrapperStyle?: StyleProp<ViewStyle>
   /** Props to pass to the Text component (e.g., style, allowFontScaling, numberOfLines) */

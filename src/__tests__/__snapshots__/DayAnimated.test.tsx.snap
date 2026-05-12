@@ -1,5 +1,119 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`DayAnimated should render DayAnimated with default Day component 1`] = `null`;
+exports[`DayAnimated should render DayAnimated with default Day component 1`] = `
+<View
+  onLayout={[Function]}
+  pointerEvents="none"
+  style={
+    [
+      {
+        "alignItems": "center",
+        "justifyContent": "center",
+      },
+      {
+        "position": "absolute",
+        "width": "100%",
+      },
+    ]
+  }
+>
+  <View
+    pointerEvents="none"
+    style={
+      {
+        "opacity": 0,
+      }
+    }
+  >
+    <View
+      style={
+        [
+          {
+            "alignItems": "center",
+            "justifyContent": "center",
+          },
+          {
+            "marginBottom": 10,
+            "marginTop": 5,
+          },
+          [
+            {
+              "marginBottom": 0,
+              "marginTop": 0,
+            },
+            undefined,
+          ],
+        ]
+      }
+    >
+      <View
+        style={
+          [
+            {
+              "backgroundColor": "rgba(0, 0, 0, 0.75)",
+              "borderRadius": 15,
+              "paddingBottom": 6,
+              "paddingLeft": 10,
+              "paddingRight": 10,
+              "paddingTop": 6,
+            },
+            undefined,
+          ]
+        }
+      >
+        <Text
+          style={
+            [
+              {
+                "color": "#fff",
+                "fontSize": 12,
+                "fontWeight": "600",
+              },
+              undefined,
+            ]
+          }
+        >
+          April 17, 2022
+        </Text>
+      </View>
+    </View>
+  </View>
+</View>
+`;
 
-exports[`DayAnimated should use custom renderDay when provided 1`] = `null`;
+exports[`DayAnimated should use custom renderDay when provided 1`] = `
+<View
+  onLayout={[Function]}
+  pointerEvents="none"
+  style={
+    [
+      {
+        "alignItems": "center",
+        "justifyContent": "center",
+      },
+      {
+        "position": "absolute",
+        "width": "100%",
+      },
+    ]
+  }
+>
+  <View
+    pointerEvents="none"
+    style={
+      {
+        "opacity": 0,
+      }
+    }
+  >
+    <View
+      testID="custom-day"
+    >
+      <Text>
+        Custom Day: 
+        2022-04-16T22:00:00.000Z
+      </Text>
+    </View>
+  </View>
+</View>
+`;

@@ -1,6 +1,3 @@
-export const DATE_FORMAT = 'D MMMM'
-export const TIME_FORMAT = 'LT'
-
 export const TEST_ID = {
   WRAPPER: 'GC_WRAPPER',
   LOADING_WRAPPER: 'GC_LOADING_CONTAINER',

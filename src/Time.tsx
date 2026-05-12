@@ -1,10 +1,7 @@
-import React, { useMemo } from 'react'
+import React, { memo, useMemo } from 'react'
 import { StyleSheet, View, ViewStyle, TextStyle } from 'react-native'
-import dayjs from 'dayjs'
-
 import { Text } from 'react-native-gesture-handler'
 import { Color } from './Color'
-import { TIME_FORMAT } from './Constant'
 import { useChatContext } from './GiftedChatContext'
 import { LeftRightStyle, IMessage } from './Models'
 import { getStyleWithPosition } from './styles'
@@ -27,24 +24,34 @@ export interface TimeProps<TMessage extends IMessage> {
   currentMessage: TMessage
   containerStyle?: LeftRightStyle<ViewStyle>
   timeTextStyle?: LeftRightStyle<TextStyle>
-  timeFormat?: string
+  /** Intl.DateTimeFormatOptions to customize time display (replaces dayjs format string) */
+  timeFormatOptions?: Intl.DateTimeFormatOptions
 }
 
-export const Time = <TMessage extends IMessage = IMessage>({
+const defaultTimeFormatOptions: Intl.DateTimeFormatOptions = {
+  hour: '2-digit',
+  minute: '2-digit',
+}
+
+export const Time = memo(function Time <TMessage extends IMessage = IMessage>({
   position = 'left',
   containerStyle,
   currentMessage,
-  timeFormat = TIME_FORMAT,
+  timeFormatOptions = defaultTimeFormatOptions,
   timeTextStyle,
-}: TimeProps<TMessage>) => {
+}: TimeProps<TMessage>) {
   const { getLocale } = useChatContext()
 
   const formattedTime = useMemo(() => {
-    if (!currentMessage)
+    if (!currentMessage?.createdAt)
       return null
 
-    return dayjs(currentMessage.createdAt).locale(getLocale()).format(timeFormat)
-  }, [currentMessage, getLocale, timeFormat])
+    const locale = getLocale() || undefined
+
+    return new Intl.DateTimeFormat(locale, timeFormatOptions).format(
+      new Date(currentMessage.createdAt)
+    )
+  }, [currentMessage?.createdAt, timeFormatOptions, getLocale])
 
   if (!currentMessage)
     return null
@@ -61,4 +68,4 @@ export const Time = <TMessage extends IMessage = IMessage>({
       </Text>
     </View>
   )
-}
+}) as <TMessage extends IMessage = IMessage>(props: TimeProps<TMessage>) => React.ReactElement | null

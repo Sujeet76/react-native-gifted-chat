@@ -49,12 +49,10 @@ export interface GiftedChatProps<TMessage extends IMessage> extends Partial<Omit
   locale?: string
   /* Force color scheme (light/dark); default is undefined (uses system color scheme) */
   colorScheme?: 'light' | 'dark'
-  /* Format to use for rendering times; default is 'LT' */
-  timeFormat?: string
-  /* Format to use for rendering dates; default is 'll' */
-  dateFormat?: string
-  /* Format to use for rendering relative times; Today - for now. See more: https://day.js.org/docs/en/plugin/calendar */
-  dateFormatCalendar?: object
+  /* Intl.DateTimeFormatOptions to customize time display (replaces dayjs timeFormat string) */
+  timeFormatOptions?: Intl.DateTimeFormatOptions
+  /* Intl.DateTimeFormatOptions to customize date separator display (replaces dayjs dateFormat string) */
+  dateFormatOptions?: Intl.DateTimeFormatOptions
   /* Whether to render an avatar for the current user; default is false, only show avatars for other users */
   isUserAvatarVisible?: boolean
   /* When false, avatars will only be displayed when a consecutive message is from the same user on the same day; default is false */

@@ -9,17 +9,15 @@ import React, {
 } from 'react'
 import {
   View,
-  LayoutChangeEvent,
   useColorScheme,
 } from 'react-native'
 import {
   ActionSheetProvider,
   ActionSheetProviderRef,
 } from '@expo/react-native-action-sheet'
-import dayjs from 'dayjs'
-import localizedFormat from 'dayjs/plugin/localizedFormat'
-import { GestureHandlerRootView, TextInput } from 'react-native-gesture-handler'
-import { KeyboardAvoidingView, KeyboardProvider } from 'react-native-keyboard-controller'
+import { useKeyboardChatComposerInset } from '@legendapp/list/keyboard-chat'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { KeyboardProvider, KeyboardStickyView } from 'react-native-keyboard-controller'
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { TEST_ID } from '../Constant'
 import { GiftedChatContext } from '../GiftedChatContext'
@@ -31,8 +29,6 @@ import { renderComponentOrElement } from '../utils'
 import styles from './styles'
 import { GiftedChatProps } from './types'
 
-dayjs.extend(localizedFormat)
-
 function GiftedChat<TMessage extends IMessage = IMessage> (
   props: GiftedChatProps<TMessage>
 ) {
@@ -42,8 +38,6 @@ function GiftedChat<TMessage extends IMessage = IMessage> (
     isTyping,
 
     // "random" function from here: https://stackoverflow.com/a/8084248/3452513
-    // we do not use uuid since it would add extra native dependency (https://www.npmjs.com/package/react-native-get-random-values)
-    // lib's user can decide which algorithm to use and pass it as a prop
     messageIdGenerator = () => (Math.random() + 1).toString(36).substring(7),
 
     user = {},
@@ -61,7 +55,6 @@ function GiftedChat<TMessage extends IMessage = IMessage> (
     reply,
   } = props
 
-  // Extract reply props for internal use
   const replyMessageProp = reply?.message
   const onClearReply = reply?.onClear
   const onSwipeToReply = reply?.swipe?.onSwipe
@@ -73,7 +66,6 @@ function GiftedChat<TMessage extends IMessage = IMessage> (
   const colorScheme = colorSchemeProp !== undefined ? colorSchemeProp : systemColorScheme
 
   const actionSheetRef = useRef<ActionSheetProviderRef>(null)
-
   const insets = useSafeAreaInsets()
 
   const messagesContainerRef = useMemo(
@@ -81,8 +73,17 @@ function GiftedChat<TMessage extends IMessage = IMessage> (
     [props.messagesContainerRef]
   ) as RefObject<AnimatedList<TMessage>>
 
+  // Ref to the composer (input bar) View for keyboard inset tracking
+  const composerViewRef = useRef<View>(null)
+
+  // Syncs the list bottom inset to match the composer height
+  const { contentInsetEndAdjustment, onComposerLayout } = useKeyboardChatComposerInset(
+    messagesContainerRef as any,
+    composerViewRef
+  )
+
   const textInputRef = useMemo(
-    () => props.textInputRef || createRef<TextInput>(),
+    () => props.textInputRef || createRef<{ clear(): void }>(),
     [props.textInputRef]
   )
 
@@ -90,7 +91,6 @@ function GiftedChat<TMessage extends IMessage = IMessage> (
   const [text, setText] = useState<string | undefined>(() => props.text || '')
   const [internalReplyMessage, setInternalReplyMessage] = useState<ReplyMessage | null>(null)
 
-  // Use controlled or uncontrolled reply state
   const replyMessage = replyMessageProp !== undefined ? replyMessageProp : internalReplyMessage
 
   const getTextFromProp = useCallback(
@@ -103,28 +103,9 @@ function GiftedChat<TMessage extends IMessage = IMessage> (
     [props.text]
   )
 
-  const scrollToBottom = useCallback(
-    (isAnimated = true) => {
-      if (!messagesContainerRef?.current)
-        return
-
-      if (isInverted) {
-        messagesContainerRef.current.scrollToOffset({
-          offset: 0,
-          animated: isAnimated,
-        })
-        return
-      }
-
-      messagesContainerRef.current.scrollToEnd({ animated: isAnimated })
-    },
-    [isInverted, messagesContainerRef]
-  )
-
   const handleSwipeToReply = useCallback(
     (message: TMessage) => {
       if (replyMessageProp === undefined)
-        // Uncontrolled mode: manage state internally
         setInternalReplyMessage({
           _id: message._id,
           text: message.text,
@@ -140,7 +121,6 @@ function GiftedChat<TMessage extends IMessage = IMessage> (
 
   const clearReply = useCallback(() => {
     if (replyMessageProp === undefined)
-      // Uncontrolled mode: manage state internally
       setInternalReplyMessage(null)
 
     onClearReply?.()
@@ -160,6 +140,7 @@ function GiftedChat<TMessage extends IMessage = IMessage> (
           messages={messages}
           forwardRef={messagesContainerRef}
           isTyping={isTyping}
+          contentInsetEndAdjustment={contentInsetEndAdjustment}
           reply={{
             ...reply,
             swipe: reply?.swipe ? {
@@ -181,6 +162,7 @@ function GiftedChat<TMessage extends IMessage = IMessage> (
     renderChatFooter,
     reply,
     handleSwipeToReply,
+    contentInsetEndAdjustment,
   ])
 
   const notifyInputTextReset = useCallback(() => {
@@ -189,72 +171,40 @@ function GiftedChat<TMessage extends IMessage = IMessage> (
 
   const resetInputToolbar = useCallback(() => {
     textInputRef.current?.clear()
-
     notifyInputTextReset()
-
     setText(getTextFromProp(''))
-  }, [
-    getTextFromProp,
-    textInputRef,
-    notifyInputTextReset,
-  ])
+  }, [getTextFromProp, textInputRef, notifyInputTextReset])
 
   const _onSend = useCallback(
     (messages: TMessage[] = [], shouldResetInputToolbar = false) => {
       if (!Array.isArray(messages))
         messages = [messages]
 
-      const newMessages: TMessage[] = messages.map(message => {
-        return {
-          ...message,
-          user: user!,
-          createdAt: new Date(),
-          _id: messageIdGenerator?.(),
-          // Attach reply message if exists
-          ...(replyMessage ? { replyMessage } : {}),
-        }
-      })
+      const newMessages: TMessage[] = messages.map(message => ({
+        ...message,
+        user: user!,
+        createdAt: new Date(),
+        _id: messageIdGenerator?.(),
+        ...(replyMessage ? { replyMessage } : {}),
+      }))
 
       if (shouldResetInputToolbar === true)
         resetInputToolbar()
 
-      // Clear reply after sending
       clearReply()
-
       onSend?.(newMessages)
-
-      setTimeout(() => scrollToBottom(), 10)
     },
-    [messageIdGenerator, onSend, user, resetInputToolbar, scrollToBottom, replyMessage, clearReply]
+    [messageIdGenerator, onSend, user, resetInputToolbar, replyMessage, clearReply]
   )
 
   const _onChangeText = useCallback(
     (text: string) => {
       props.textInputProps?.onChangeText?.(text)
 
-      // Only set state if it's not being overridden by a prop.
       if (props.text === undefined)
         setText(text)
     },
     [props.text, props.textInputProps]
-  )
-
-  const onInitialLayoutViewLayout = useCallback(
-    (e: LayoutChangeEvent) => {
-      if (isInitialized)
-        return
-
-      const { layout } = e.nativeEvent
-
-      if (layout.height <= 0)
-        return
-
-      notifyInputTextReset()
-
-      setIsInitialized(true)
-      setText(getTextFromProp(initialText))
-    },
-    [isInitialized, initialText, notifyInputTextReset, getTextFromProp]
   )
 
   const inputToolbarFragment = useMemo(() => {
@@ -270,7 +220,6 @@ function GiftedChat<TMessage extends IMessage = IMessage> (
         onChangeText: _onChangeText,
         ref: textInputRef,
       },
-      // Reply preview props
       replyMessage,
       onClearReply: clearReply,
       renderReplyPreview,
@@ -324,21 +273,29 @@ function GiftedChat<TMessage extends IMessage = IMessage> (
         <View
           testID={TEST_ID.WRAPPER}
           style={[stylesCommon.fill, styles.contentContainer]}
-          onLayout={onInitialLayoutViewLayout}
+          onLayout={e => {
+            if (isInitialized)
+              return
+
+            const { layout } = e.nativeEvent
+
+            if (layout.height <= 0)
+              return
+
+            props.textInputProps?.onChangeText?.('')
+            setIsInitialized(true)
+            setText(getTextFromProp(initialText))
+          }}
         >
-          {/* @ts-expect-error */}
-          <KeyboardAvoidingView
-            behavior='translate-with-padding'
-            keyboardVerticalOffset={insets.top}
-            style={stylesCommon.fill}
-            {...props.keyboardAvoidingViewProps}
-          >
-            <View style={[stylesCommon.fill, !isInitialized && styles.hidden]}>
-              {renderMessages}
-              {inputToolbarFragment}
-            </View>
-            {!isInitialized && renderComponentOrElement(renderLoading, {})}
-          </KeyboardAvoidingView>
+          <View style={[stylesCommon.fill, !isInitialized && styles.hidden]}>
+            {renderMessages}
+            <KeyboardStickyView offset={{ closed: 0, opened: insets.bottom }}>
+              <View ref={composerViewRef} onLayout={onComposerLayout}>
+                {inputToolbarFragment}
+              </View>
+            </KeyboardStickyView>
+          </View>
+          {!isInitialized && renderComponentOrElement(renderLoading, {})}
         </View>
       </ActionSheetProvider>
     </GiftedChatContext.Provider>

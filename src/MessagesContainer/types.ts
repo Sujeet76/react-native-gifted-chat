@@ -1,11 +1,9 @@
 import { RefObject } from 'react'
 import {
-  FlatListProps,
   StyleProp,
   ViewStyle,
 } from 'react-native'
-import { FlatList } from 'react-native-gesture-handler'
-import Animated, { ScrollEvent } from 'react-native-reanimated'
+import { LegendListRef, LegendListProps } from '@legendapp/list/react-native'
 
 import { DayProps } from '../Day'
 import { LoadEarlierMessagesProps } from '../LoadEarlierMessages'
@@ -14,42 +12,30 @@ import { User, IMessage, Reply } from '../Models'
 import { ReplyProps } from '../Reply'
 import { TypingIndicatorProps } from '../TypingIndicator/types'
 
-/** Animated FlatList created from react-native-gesture-handler's FlatList */
-const RNGHAnimatedFlatList = Animated.createAnimatedComponent(FlatList)
+export type { LegendListRef }
 
-/**
- * Typed AnimatedFlatList component that preserves generic type parameter.
- * Uses react-native-gesture-handler's FlatList which respects keyboardShouldPersistTaps.
- */
-export const AnimatedFlatList = RNGHAnimatedFlatList as <TMessage>(
-  props: FlatListProps<TMessage> & {
-    ref?: RefObject<FlatList<TMessage>>
-  }
-) => React.ReactElement
+/** The ref type for the messages list */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export type AnimatedList<_TMessage> = LegendListRef
 
-export type AnimatedListProps<TMessage extends IMessage = IMessage> = Partial<
-  Omit<FlatListProps<TMessage>, 'onScroll'> & {
-    onScroll?: (event: ScrollEvent) => void
-  }
+/** Additional props for LegendList */
+export type AnimatedListProps<_TMessage extends IMessage = IMessage> = Partial<
+  Omit<LegendListProps<unknown>, 'data' | 'renderItem' | 'keyExtractor'>
 >
-
-export type AnimatedList<TMessage> = FlatList<TMessage>
 
 export interface MessagesContainerProps<TMessage extends IMessage = IMessage>
   extends Omit<TypingIndicatorProps, 'style'> {
-  /** Ref for the FlatList message container */
+  /** Ref for the message list */
   forwardRef?: RefObject<AnimatedList<TMessage>>
-  /** Messages to display */
+  /** Messages to display (newest-first when isInverted=true, which is the default) */
   messages?: TMessage[]
-  /** Format to use for rendering dates; default is 'll' */
-  dateFormat?: string
-  /** Format to use for rendering relative times */
-  dateFormatCalendar?: object
+  /** Format to use for rendering dates; accepts Intl.DateTimeFormatOptions */
+  dateFormatOptions?: Intl.DateTimeFormatOptions
   /** User sending the messages: { _id, name, avatar } */
   user?: User
-  /** Additional props for FlatList */
+  /** Additional props for LegendList */
   listProps?: AnimatedListProps<TMessage>
-  /** Reverses display order of messages; default is true */
+  /** Reverses display order of messages; default is true (newest-first public API) */
   isInverted?: boolean
   /** Controls whether or not the message bubbles appear at the top of the chat */
   isAlignedTop?: boolean
@@ -63,7 +49,7 @@ export interface MessagesContainerProps<TMessage extends IMessage = IMessage>
   scrollToBottomOffset?: number
   /** Custom component to render when messages are empty */
   renderChatEmpty?: () => React.ReactNode
-  /** Custom footer component on the ListView, e.g. 'User is typing...' */
+  /** Custom footer component on the list, e.g. 'User is typing...' */
   renderFooter?: (props: MessagesContainerProps<TMessage>) => React.ReactNode
   /** Custom message container */
   renderMessage?: (props: MessageProps<TMessage>) => React.ReactElement
@@ -77,7 +63,7 @@ export interface MessagesContainerProps<TMessage extends IMessage = IMessage>
   scrollToBottomComponent?: () => React.ReactNode
   /** Callback when quick reply is sent */
   onQuickReply?: (replies: Reply[]) => void
-  /** Props to pass to the LoadEarlierMessages component. The LoadEarlierMessages button is only visible when isAvailable is true. Includes isAvailable (controls button visibility), isInfiniteScrollEnabled (infinite scroll up when reach the top of messages container, automatically call onPress function if it exists - not yet supported for web), onPress (callback when button is pressed), isLoading (display loading indicator), label (override default "Load earlier messages" text), and styling props (containerStyle, wrapperStyle, textStyle, activityIndicatorStyle, activityIndicatorColor, activityIndicatorSize). */
+  /** Props to pass to the LoadEarlierMessages component. */
   loadEarlierMessagesProps?: LoadEarlierMessagesProps
   /** Style for TypingIndicator component */
   typingIndicatorStyle?: StyleProp<ViewStyle>
@@ -85,18 +71,14 @@ export interface MessagesContainerProps<TMessage extends IMessage = IMessage>
   isDayAnimationEnabled?: boolean
   /** Reply functionality configuration */
   reply?: ReplyProps<TMessage>
+  /**
+   * SharedValue for keyboard inset adjustment (from useKeyboardChatComposerInset).
+   * Passed from GiftedChat when using KeyboardChatLegendList.
+   */
+  contentInsetEndAdjustment?: import('react-native-reanimated').SharedValue<number>
 }
 
 export interface State {
   showScrollBottom: boolean
   hasScrolled: boolean
 }
-
-interface ViewLayout {
-  x: number
-  y: number
-  width: number
-  height: number
-}
-
-export type DaysPositions = { [key: string]: ViewLayout & { createdAt: number } }

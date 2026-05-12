@@ -48,7 +48,7 @@ export interface GiftedAvatarProps {
   onLongPress?: (props: GiftedAvatarProps) => void
 }
 
-export function GiftedAvatar (
+export const GiftedAvatar = React.memo(function GiftedAvatar (
   props: GiftedAvatarProps
 ) {
   const {
@@ -184,4 +184,4 @@ export function GiftedAvatar (
       {renderInitials()}
     </TouchableOpacity>
   )
-}
+})

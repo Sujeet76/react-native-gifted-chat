@@ -43,7 +43,7 @@ exports[`Day should not render <Day /> and compare with snapshot 1`] = `
         ]
       }
     >
-      17 April 2022
+      April 17, 2022
     </Text>
   </View>
 </View>
@@ -92,7 +92,7 @@ exports[`Day should render <Day /> and compare with snapshot 1`] = `
         ]
       }
     >
-      17 April 2022
+      April 17, 2022
     </Text>
   </View>
 </View>

@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useRef } from 'react'
-import dayjs from 'dayjs'
 import { IMessage } from './Models'
 
 export function renderComponentOrElement<TProps extends Record<string, any>>(
@@ -37,19 +36,20 @@ export function renderComponentOrElement<TProps extends Record<string, any>>(
 }
 
 export function isSameDay (
-  currentMessage: IMessage,
-  diffMessage: IMessage | null | undefined
+  currentMessage: Pick<IMessage, 'createdAt'>,
+  diffMessage: Pick<IMessage, 'createdAt'> | null | undefined
 ) {
-  if (!diffMessage || !diffMessage.createdAt)
+  if (!diffMessage?.createdAt || !currentMessage?.createdAt)
     return false
 
-  const currentCreatedAt = dayjs(currentMessage.createdAt)
-  const diffCreatedAt = dayjs(diffMessage.createdAt)
+  const d1 = new Date(currentMessage.createdAt)
+  const d2 = new Date(diffMessage.createdAt)
 
-  if (!currentCreatedAt.isValid() || !diffCreatedAt.isValid())
-    return false
-
-  return currentCreatedAt.isSame(diffCreatedAt, 'day')
+  return (
+    d1.getFullYear() === d2.getFullYear() &&
+    d1.getMonth() === d2.getMonth() &&
+    d1.getDate() === d2.getDate()
+  )
 }
 
 export function isSameUser (

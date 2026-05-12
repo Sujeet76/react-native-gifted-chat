@@ -134,7 +134,7 @@ export default [
 
       // TypeScript rules
       '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unused-vars': ['error'],
+      '@typescript-eslint/no-unused-vars': ['error', { varsIgnorePattern: '^_', argsIgnorePattern: '^_' }],
 
       // Stylistic rules
       '@stylistic/semi': ['error', 'never'],
@@ -310,7 +310,7 @@ export default [
 
       // TypeScript rules
       '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unused-vars': ['error'],
+      '@typescript-eslint/no-unused-vars': ['error', { varsIgnorePattern: '^_', argsIgnorePattern: '^_' }],
 
       // Stylistic rules
       '@stylistic/semi': ['error', 'never'],

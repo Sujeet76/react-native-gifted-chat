@@ -133,7 +133,7 @@ exports[`Message component should render <Message /> and compare with snapshot 1
                     ]
                   }
                 >
-                  7:20 PM
+                  07:20 PM
                 </Text>
               </View>
             </View>
